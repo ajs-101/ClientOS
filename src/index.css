@@ -1,0 +1,236 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg-base: #070F0D;
+  --bg-elevated: #0B1815;
+  --glass-bg: rgba(20, 40, 36, 0.45);
+  --glass-border: rgba(31, 216, 180, 0.18);
+  --glass-border-hover: rgba(31, 216, 180, 0.4);
+  --accent-teal: #1FD8B4;
+  --accent-teal-bright: #4FE8C4;
+  --accent-cyan: #38BDF8;
+  --text-primary: #EAF6F2;
+  --text-muted: #8FA9A3;
+  --text-dim: #5A716C;
+  --danger: #F87171;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: radial-gradient(circle at 20% 0%, var(--bg-elevated) 0%, var(--bg-base) 55%);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  transition: background 0.4s ease;
+}
+
+h1, h2, h3, .display { font-family: 'Space Grotesk', sans-serif; font-weight: 600; letter-spacing: -0.02em; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.glass:hover { border-color: var(--glass-border-hover); }
+.glass-static:hover { transform: none; }
+.glass-interactive:hover { transform: translateY(-3px); }
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent-teal-bright), var(--accent-cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-cyan));
+  color: #06110E;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 1.4rem;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1.3rem;
+}
+.btn-ghost:hover { border-color: var(--glass-border-hover); }
+
+input, select, textarea {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.9rem;
+  color: var(--text-primary);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent-teal); }
+input::placeholder { color: var(--text-dim); }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(31,216,180,0.25); border-radius: 8px; }
+
+.ambient-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+  animation: float 14s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -25px); }
+}
+
+.logo-glow { position: relative; display: inline-block; }
+.logo-glow::before {
+  content: "";
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle, var(--glass-border-hover) 0%, transparent 70%);
+  filter: blur(20px);
+  z-index: -1;
+}
+.logo-glow img { filter: drop-shadow(0 0 12px var(--glass-border-hover)); }
+
+.logout-btn { transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease; }
+.logout-btn:hover {
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+  background: rgba(248, 113, 113, 0.08) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-orb { animation: none; }
+  .glass, .btn-primary { transition: none; }
+}
+
+.gate-bg {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(46,124,246,0.16) 0%, transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(201,166,89,0.14) 0%, transparent 45%),
+    radial-gradient(circle at 50% 100%, rgba(90,169,255,0.06) 0%, transparent 60%),
+    #05070C;
+}
+
+.gate-mesh {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.gate-card {
+  width: 290px;
+  padding: 2.75rem 2.25rem;
+  border-radius: 22px;
+  cursor: pointer;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  text-align: center;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.3s ease;
+}
+
+.gate-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 24px 70px -24px var(--card-glow);
+}
+
+.gate-unlock-btn {
+  color: #05070C;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+.gate-unlock-btn:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gate-card, .gate-unlock-btn { transition: none; }
+}
+.init-logo {
+  animation: initPulse 1.8s ease-in-out infinite;
+}
+@keyframes initPulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+.init-ring {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  border: 1px solid var(--ring-color);
+  opacity: 0.25;
+  animation: initRing 2.4s ease-out infinite;
+}
+@keyframes initRing {
+  0% { transform: scale(0.6); opacity: 0.5; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.init-bar-track {
+  width: 220px;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  margin-top: 1.5rem;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+.init-bar-fill {
+  height: 100%;
+  width: 40%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--bar-color-2), var(--bar-color));
+  animation: initBar 2.2s ease-in-out forwards;
+}
+@keyframes initBar {
+  0% { transform: translateX(-100%); }
+  60% { transform: translateX(120%); }
+  100% { transform: translateX(260%); width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .init-logo, .init-ring, .init-bar-fill { animation: none; }
+}
