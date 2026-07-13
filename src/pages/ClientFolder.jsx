@@ -1,11 +1,25 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { doc, getDoc, collection, addDoc, onSnapshot, query, where } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, onSnapshot, query, where, orderBy } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { uploadFile } from "../lib/cloudinary";
-import { Upload, Sparkles, FileText } from "lucide-react";
+import { Upload, Sparkles, FileText, StickyNote, Plus } from "lucide-react";
 
 const ASSET_TYPES = ["newsletter", "press_release", "image", "agreement", "other"];
+
+function linkify(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) =>
+    urlRegex.test(part) ? (
+      <a key={i} href={part} target="_blank" rel="noreferrer" style={{ color: "var(--accent-teal-bright)", textDecoration: "underline" }}>
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+}
 
 export default function ClientFolder() {
   const { clientId } = useParams();
@@ -16,15 +30,27 @@ export default function ClientFolder() {
   const [summary, setSummary] = useState("");
   const [loadingSummary, setLoadingSummary] = useState(false);
 
+  const [notes, setNotes] = useState([]);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [noteTitle, setNoteTitle] = useState("");
+  const [showNoteForm, setShowNoteForm] = useState(false);
+
   useEffect(() => {
     getDoc(doc(db, "clients", clientId)).then((snap) => {
       if (snap.exists()) setClient({ id: snap.id, ...snap.data() });
     });
-    const q = query(collection(db, "assets"), where("clientId", "==", clientId));
-    const unsub = onSnapshot(q, (snap) => {
+
+    const assetsQ = query(collection(db, "assets"), where("clientId", "==", clientId));
+    const unsubAssets = onSnapshot(assetsQ, (snap) => {
       setAssets(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
-    return unsub;
+
+    const notesQ = query(collection(db, "notes"), where("clientId", "==", clientId), orderBy("createdAt", "desc"));
+    const unsubNotes = onSnapshot(notesQ, (snap) => {
+      setNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+
+    return () => { unsubAssets(); unsubNotes(); };
   }, [clientId]);
 
   async function handleFile(e) {
@@ -47,6 +73,20 @@ export default function ClientFolder() {
     setUploading(false);
   }
 
+  async function handleSaveNote() {
+    if (!noteDraft.trim()) return;
+    await addDoc(collection(db, "notes"), {
+      clientId,
+      orgId: client?.orgId,
+      title: noteTitle.trim() || "Untitled note",
+      content: noteDraft,
+      createdAt: new Date().toISOString(),
+    });
+    setNoteDraft("");
+    setNoteTitle("");
+    setShowNoteForm(false);
+  }
+
   async function handleSummarize() {
     setLoadingSummary(true);
     try {
@@ -54,7 +94,10 @@ export default function ClientFolder() {
         method: "POST",
         body: JSON.stringify({
           clientName: client?.name,
-          activityLog: assets.map((a) => `${a.type}: ${a.fileName}`),
+          activityLog: [
+            ...assets.map((a) => `${a.type}: ${a.fileName}`),
+            ...notes.map((n) => `note "${n.title}": ${n.content.slice(0, 200)}`),
+          ],
         }),
       });
       const data = await res.json();
@@ -84,6 +127,46 @@ export default function ClientFolder() {
         </button>
       </div>
 
+      {/* --- NOTES SECTION --- */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+        <h2 style={{ fontSize: "1.1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <StickyNote size={17} color="var(--accent-teal-bright)" /> Notes & scope
+        </h2>
+        <button className="btn-ghost" onClick={() => setShowNoteForm(!showNoteForm)} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem" }}>
+          <Plus size={14} /> Add note
+        </button>
+      </div>
+
+      {showNoteForm && (
+        <div className="glass" style={{ padding: "1.5rem", marginBottom: "1.5rem", display: "grid", gap: "0.75rem" }}>
+          <input placeholder="Note title (e.g. Project Deliverables)" value={noteTitle} onChange={(e) => setNoteTitle(e.target.value)} />
+          <textarea
+            placeholder="Paste any text here — scope, deliverables, links, whatever you'd normally type up..."
+            value={noteDraft}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            rows={10}
+            style={{ resize: "vertical", fontFamily: "inherit", lineHeight: 1.6 }}
+          />
+          <button className="btn-primary" onClick={handleSaveNote} style={{ justifySelf: "start" }}>Save note</button>
+        </div>
+      )}
+
+      <div style={{ display: "grid", gap: "0.75rem", marginBottom: "2rem" }}>
+        {notes.length === 0 && !showNoteForm && (
+          <p style={{ color: "var(--text-dim)", fontSize: "0.85rem" }}>No notes yet — click "Add note" to paste in scope, deliverables, or anything else.</p>
+        )}
+        {notes.map((n) => (
+          <div key={n.id} className="glass" style={{ padding: "1.25rem 1.5rem" }}>
+            <p style={{ fontWeight: 500, marginBottom: "0.5rem" }}>{n.title}</p>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+              {linkify(n.content)}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* --- FILE UPLOADS --- */}
+      <h2 style={{ fontSize: "1.1rem", marginBottom: "0.75rem" }}>Files</h2>
       <div className="glass" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
           <select value={assetType} onChange={(e) => setAssetType(e.target.value)}>
