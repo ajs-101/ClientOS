@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { doc, getDoc, collection, addDoc, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, onSnapshot, query, where, orderBy, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { uploadFile } from "../lib/cloudinary";
-import { Upload, Sparkles, FileText, StickyNote, Plus } from "lucide-react";
+import { Upload, Sparkles, FileText, StickyNote, Plus, Trash2 } from "lucide-react";
 
 const ASSET_TYPES = ["newsletter", "press_release", "image", "agreement", "other"];
 
@@ -87,6 +87,16 @@ export default function ClientFolder() {
     setShowNoteForm(false);
   }
 
+  async function handleDeleteNote(noteId) {
+    if (!confirm("Delete this note? This can't be undone.")) return;
+    await deleteDoc(doc(db, "notes", noteId));
+  }
+
+  async function handleDeleteAsset(assetId) {
+    if (!confirm("Remove this file from the client folder?")) return;
+    await deleteDoc(doc(db, "assets", assetId));
+  }
+
   async function handleSummarize() {
     setLoadingSummary(true);
     try {
@@ -156,8 +166,20 @@ export default function ClientFolder() {
           <p style={{ color: "var(--text-dim)", fontSize: "0.85rem" }}>No notes yet — click "Add note" to paste in scope, deliverables, or anything else.</p>
         )}
         {notes.map((n) => (
-          <div key={n.id} className="glass" style={{ padding: "1.25rem 1.5rem" }}>
-            <p style={{ fontWeight: 500, marginBottom: "0.5rem" }}>{n.title}</p>
+          <div key={n.id} className="glass" style={{ padding: "1.25rem 1.5rem", position: "relative" }}>
+            <button
+              onClick={() => handleDeleteNote(n.id)}
+              style={{
+                position: "absolute", top: "1rem", right: "1rem",
+                background: "none", border: "none", color: "var(--text-dim)", display: "flex",
+                opacity: 0.6, transition: "opacity 0.2s ease, color 0.2s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = "var(--danger)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = 0.6; e.currentTarget.style.color = "var(--text-dim)"; }}
+            >
+              <Trash2 size={14} />
+            </button>
+            <p style={{ fontWeight: 500, marginBottom: "0.5rem", paddingRight: "1.5rem" }}>{n.title}</p>
             <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
               {linkify(n.content)}
             </p>
@@ -182,11 +204,25 @@ export default function ClientFolder() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
         {assets.map((a) => (
-          <a key={a.id} href={a.url} target="_blank" rel="noreferrer" className="glass glass-interactive" style={{ display: "block", padding: "1.25rem" }}>
-            <FileText size={18} color="var(--accent-teal-bright)" />
-            <p style={{ fontSize: "0.85rem", marginTop: "0.6rem" }}>{a.fileName}</p>
-            <p style={{ fontSize: "0.72rem", color: "var(--text-dim)", marginTop: "0.2rem", textTransform: "capitalize" }}>{a.type.replace("_", " ")}</p>
-          </a>
+          <div key={a.id} className="glass glass-interactive" style={{ padding: "1.25rem", position: "relative" }}>
+            <button
+              onClick={() => handleDeleteAsset(a.id)}
+              style={{
+                position: "absolute", top: "0.75rem", right: "0.75rem",
+                background: "none", border: "none", color: "var(--text-dim)", display: "flex",
+                opacity: 0.6, transition: "opacity 0.2s ease, color 0.2s ease", zIndex: 2,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = "var(--danger)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = 0.6; e.currentTarget.style.color = "var(--text-dim)"; }}
+            >
+              <Trash2 size={14} />
+            </button>
+            <a href={a.url} target="_blank" rel="noreferrer" style={{ display: "block" }}>
+              <FileText size={18} color="var(--accent-teal-bright)" />
+              <p style={{ fontSize: "0.85rem", marginTop: "0.6rem", paddingRight: "1.25rem" }}>{a.fileName}</p>
+              <p style={{ fontSize: "0.72rem", color: "var(--text-dim)", marginTop: "0.2rem", textTransform: "capitalize" }}>{a.type.replace("_", " ")}</p>
+            </a>
+          </div>
         ))}
       </div>
     </div>
