@@ -33,8 +33,8 @@ export default function Sidebar({ onLogout }) {
         <div className="logo-glow">
           <img src={org.logo} alt={org.name} style={{ width: "100%", maxWidth: 200 }} />
         </div>
-        <div style={{ fontSize: "0.7rem", color: "var(--text-dim)", marginTop: "0.5rem", letterSpacing: "0.08em" }}>
-          CLIENT OS
+        <div style={{ fontSize: "0.7rem", color: "var(--accent-teal-bright)", marginTop: "0.5rem", letterSpacing: "0.08em", fontWeight: 600 }}>
+          {org.name.toUpperCase()} WORKSPACE
         </div>
       </div>
 

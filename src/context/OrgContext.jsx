@@ -4,7 +4,7 @@ import { ORGS } from "../config/orgs";
 const OrgContext = createContext(null);
 
 export function OrgProvider({ children }) {
-  const [activeOrg, setActiveOrg] = useState(() => sessionStorage.getItem("activeOrg") || null);
+  const [activeOrg, setActiveOrg] = useState(() => localStorage.getItem("activeOrg") || null);
 
   useEffect(() => {
     if (!activeOrg) return;
@@ -19,7 +19,7 @@ export function OrgProvider({ children }) {
     root.setProperty("--accent-teal", org.colors.accentPrimary);
     root.setProperty("--accent-teal-bright", org.colors.accentBright);
     root.setProperty("--accent-cyan", org.colors.accentSecondary);
-    sessionStorage.setItem("activeOrg", activeOrg);
+    localStorage.setItem("activeOrg", activeOrg);
   }, [activeOrg]);
 
   function unlockOrg(orgId, passwordAttempt) {
@@ -36,7 +36,7 @@ export function OrgProvider({ children }) {
   }
 
   function switchOrg() {
-    sessionStorage.removeItem("activeOrg");
+    localStorage.removeItem("activeOrg");
     setActiveOrg(null);
   }
 
