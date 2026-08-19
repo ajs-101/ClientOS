@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { collection, onSnapshot, query, where, orderBy, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { Bell, AlertTriangle, MessageCircle, Check } from "lucide-react";
+import { Bell, AlertTriangle, MessageCircle } from "lucide-react";
 
 export default function NotificationPanel({ orgId, targetProfile }) {
   const [notifications, setNotifications] = useState([]);
@@ -29,18 +29,23 @@ export default function NotificationPanel({ orgId, targetProfile }) {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  async function markRead(id) {
-    await updateDoc(doc(db, "notifications", id), { read: true });
+  function handleOpen() {
+    const willOpen = !open;
+    setOpen(willOpen);
+    if (willOpen) markAllRead();
   }
 
   async function markAllRead() {
-    await Promise.all(notifications.filter((n) => !n.read).map((n) => updateDoc(doc(db, "notifications", n.id), { read: true })));
+    const now = new Date().toISOString();
+    const unread = notifications.filter((n) => !n.read);
+    if (!unread.length) return;
+    await Promise.all(unread.map((n) => updateDoc(doc(db, "notifications", n.id), { read: true, readAt: now })));
   }
 
   return (
     <div style={{ position: "relative" }} ref={ref}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={handleOpen}
         className="btn-ghost"
         style={{ position: "relative", padding: "0.6rem", display: "flex" }}
       >
@@ -61,14 +66,7 @@ export default function NotificationPanel({ orgId, targetProfile }) {
           position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: 340,
           maxHeight: 400, overflowY: "auto", padding: "1rem", zIndex: 50,
         }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-            <p style={{ fontWeight: 600, fontSize: "0.9rem" }}>Notifications</p>
-            {unreadCount > 0 && (
-              <button onClick={markAllRead} style={{ background: "none", border: "none", color: "var(--accent-teal-bright)", fontSize: "0.75rem" }}>
-                Mark all read
-              </button>
-            )}
-          </div>
+          <p style={{ fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.75rem" }}>Notifications</p>
 
           {notifications.length === 0 && (
             <p style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>You're all caught up.</p>
@@ -78,11 +76,10 @@ export default function NotificationPanel({ orgId, targetProfile }) {
             {notifications.map((n) => (
               <div
                 key={n.id}
-                onClick={() => !n.read && markRead(n.id)}
                 style={{
-                  padding: "0.7rem 0.85rem", borderRadius: 10, cursor: n.read ? "default" : "pointer",
-                  background: n.read ? "transparent" : "rgba(248,113,113,0.08)",
-                  border: `1px solid ${n.read ? "var(--glass-border)" : "rgba(248,113,113,0.25)"}`,
+                  padding: "0.7rem 0.85rem", borderRadius: 10,
+                  background: "transparent",
+                  border: "1px solid var(--glass-border)",
                   display: "flex", gap: "0.6rem", alignItems: "flex-start",
                 }}
               >
@@ -97,7 +94,6 @@ export default function NotificationPanel({ orgId, targetProfile }) {
                     {new Date(n.createdAt).toLocaleString()}
                   </p>
                 </div>
-                {!n.read && <Check size={13} color="var(--text-dim)" style={{ flexShrink: 0 }} />}
               </div>
             ))}
           </div>

@@ -8,7 +8,7 @@ import { runOverdueEscalation } from "../lib/escalation";
 import { PROFILE_LIST } from "../config/employeeProfiles";
 import TaskCard from "../components/TaskCard";
 import NotificationPanel from "../components/NotificationPanel";
-import { Sparkles, Send, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Sparkles, Send, ArrowLeft, ShieldCheck, Eye, EyeOff } from "lucide-react";
 
 export default function AdminOverview() {
   const navigate = useNavigate();
@@ -16,6 +16,7 @@ export default function AdminOverview() {
   const { activeProfile } = useEmployee();
 
   const [tasks, setTasks] = useState([]);
+  const [allNotifications, setAllNotifications] = useState([]);
   const [digest, setDigest] = useState("");
   const [loadingDigest, setLoadingDigest] = useState(false);
   const [reminderProfile, setReminderProfile] = useState(PROFILE_LIST[0].id);
@@ -29,8 +30,18 @@ export default function AdminOverview() {
   useEffect(() => {
     if (!activeOrg) return;
     runOverdueEscalation(activeOrg);
+
     const q = query(collection(db, "employeeTasks"), where("orgId", "==", activeOrg));
-    return onSnapshot(q, (snap) => setTasks(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+    const unsubTasks = onSnapshot(q, (snap) => setTasks(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+
+    const notifQ = query(collection(db, "notifications"), where("orgId", "==", activeOrg));
+    const unsubNotif = onSnapshot(notifQ, (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      setAllNotifications(list);
+    });
+
+    return () => { unsubTasks(); unsubNotif(); };
   }, [activeOrg]);
 
   async function handleStatusChange(taskId, newStatus) {
@@ -74,6 +85,7 @@ export default function AdminOverview() {
   }
 
   const filteredTasks = activeTab === "all" ? tasks : tasks.filter((t) => t.profile === activeTab);
+  const profileName = (id) => PROFILE_LIST.find((p) => p.id === id)?.name || id;
 
   return (
     <div>
@@ -103,7 +115,7 @@ export default function AdminOverview() {
         </button>
       </div>
 
-      <div className="glass" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
+      <div className="glass" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
         <p style={{ fontWeight: 500, marginBottom: "0.75rem", fontSize: "0.9rem" }}>Send a reminder</p>
         <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
           <select value={reminderProfile} onChange={(e) => setReminderProfile(e.target.value)}>
@@ -113,6 +125,31 @@ export default function AdminOverview() {
           <button className="btn-primary" onClick={handleSendReminder} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
             <Send size={14} /> Send
           </button>
+        </div>
+      </div>
+
+      {/* --- NOTIFICATION ACTIVITY (read/unread visibility) --- */}
+      <div className="glass" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
+        <p style={{ fontWeight: 500, marginBottom: "0.9rem", fontSize: "0.9rem" }}>Notification activity</p>
+        <div style={{ display: "grid", gap: "0.6rem", maxHeight: 260, overflowY: "auto" }}>
+          {allNotifications.length === 0 && <p style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>No notifications sent yet.</p>}
+          {allNotifications.slice(0, 20).map((n) => (
+            <div key={n.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.8rem", gap: "0.75rem" }}>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontWeight: 600, textTransform: "capitalize" }}>{profileName(n.targetProfile)}</span>
+                <span style={{ color: "var(--text-muted)", marginLeft: "0.5rem" }}>{n.message}</span>
+              </div>
+              {n.read ? (
+                <span style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "var(--accent-teal-bright)", fontSize: "0.72rem", flexShrink: 0 }}>
+                  <Eye size={12} /> Seen{n.readAt ? ` ${new Date(n.readAt).toLocaleDateString()}` : ""}
+                </span>
+              ) : (
+                <span style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "var(--text-dim)", fontSize: "0.72rem", flexShrink: 0 }}>
+                  <EyeOff size={12} /> Unseen
+                </span>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
