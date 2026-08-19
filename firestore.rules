@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+// Paste this into Firebase Console -> Firestore Database -> Rules -> Publish.
+// Access control for this app is handled at the application layer (workspace
+// passwords + employee profile passwords + credentials second-lock), not by
+// Firestore rules, since there is no per-user Firebase Auth in this build.

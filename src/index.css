@@ -234,3 +234,62 @@ input::placeholder { color: var(--text-dim); }
 @media (prefers-reduced-motion: reduce) {
   .init-logo, .init-ring, .init-bar-fill { animation: none; }
 }
+/* ========== Water-flow ambient background layer ========== */
+.water-flow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 100%, var(--glass-border-hover) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 80% 0%, var(--accent-cyan) 0%, transparent 55%);
+  background-size: 200% 200%;
+  filter: blur(60px);
+  opacity: 0.12;
+  animation: waterFlow 22s ease-in-out infinite;
+}
+@keyframes waterFlow {
+  0%   { background-position: 0% 0%, 100% 100%; }
+  50%  { background-position: 100% 50%, 0% 50%; }
+  100% { background-position: 0% 0%, 100% 100%; }
+}
+
+/* ========== 3D tilt on interactive cards ========== */
+.glass-interactive {
+  transform-style: preserve-3d;
+  perspective: 800px;
+}
+.glass-interactive:hover {
+  transform: translateY(-5px) rotateX(2deg) rotateY(-1.5deg);
+  box-shadow: 0 22px 50px -22px rgba(0,0,0,0.5);
+}
+.gate-card, .employee-card {
+  transform-style: preserve-3d;
+  perspective: 900px;
+}
+.gate-card:hover, .employee-card:hover {
+  transform: translateY(-8px) rotateX(2.5deg) rotateY(-2deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .water-flow { animation: none; }
+  .glass-interactive:hover, .gate-card:hover, .employee-card:hover { transform: none; }
+}
+
+/* ========== Stat cards / dashboard panels ========== */
+.glass:has(> svg:first-child) {
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* ========== Scrollbar inside panels ========== */
+.glass::-webkit-scrollbar { width: 6px; }
+.glass::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 6px; }
+
+/* ========== Tab buttons (admin overview) ========== */
+button.btn-ghost, button.btn-primary {
+  transition: filter 0.2s ease, transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+/* ========== Textarea consistency ========== */
+textarea { line-height: 1.6; }

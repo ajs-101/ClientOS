@@ -26,9 +26,9 @@ export default function Projects() {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.8rem" }}>Projects</h1>
+        <h1 style={{ fontSize: "1.8rem" }}>Tools</h1>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-          <Plus size={16} /> Add project
+          <Plus size={16} /> Add tool
         </button>
       </div>
 

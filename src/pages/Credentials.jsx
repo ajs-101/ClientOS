@@ -1,20 +1,39 @@
 import { useState, useEffect } from "react";
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { encryptField, decryptField } from "../lib/crypto";
 import { useOrg } from "../context/OrgContext";
-import { Plus, Eye, EyeOff, KeyRound, ExternalLink } from "lucide-react";
+import { PROFILES } from "../config/employeeProfiles";
+import { Plus, Eye, EyeOff, KeyRound, ExternalLink, Trash2, Lock } from "lucide-react";
+
+// Second gate on top of the workspace password — only people with the admin
+// password can reach the credentials vault, even inside an unlocked workspace.
+const CREDENTIALS_PASSWORD = PROFILES.admin.password;
 
 export default function Credentials() {
   const { activeOrg } = useOrg();
+  const [unlocked, setUnlocked] = useState(false);
+  const [gatePassword, setGatePassword] = useState("");
+  const [gateError, setGateError] = useState(false);
+
   const [entries, setEntries] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [visibleId, setVisibleId] = useState(null);
   const [form, setForm] = useState({ platform: "", username: "", password: "", url: "" });
 
   useEffect(() => {
-    if (activeOrg) loadEntries();
-  }, [activeOrg]);
+    if (activeOrg && unlocked) loadEntries();
+  }, [activeOrg, unlocked]);
+
+  function handleGateUnlock() {
+    if (gatePassword === CREDENTIALS_PASSWORD) {
+      setUnlocked(true);
+      setGateError(false);
+    } else {
+      setGateError(true);
+      setGatePassword("");
+    }
+  }
 
   async function loadEntries() {
     const q = query(collection(db, "credentials"), where("orgId", "==", activeOrg));
@@ -38,12 +57,43 @@ export default function Credentials() {
     loadEntries();
   }
 
+  async function handleDelete(id) {
+    if (!confirm("Delete this credential?")) return;
+    await deleteDoc(doc(db, "credentials", id));
+    loadEntries();
+  }
+
+  if (!unlocked) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <div className="glass" style={{ padding: "2.5rem", width: 340, textAlign: "center" }}>
+          <Lock size={22} color="var(--accent-teal-bright)" style={{ marginBottom: "1rem" }} />
+          <h2 style={{ fontSize: "1.15rem", marginBottom: "0.4rem" }}>Restricted area</h2>
+          <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "1.5rem" }}>
+            The credentials vault needs a second password, separate from the workspace password.
+          </p>
+          <div style={{ display: "grid", gap: "0.75rem" }}>
+            <input
+              type="password" autoFocus placeholder="Credentials password"
+              value={gatePassword}
+              onChange={(e) => { setGatePassword(e.target.value); setGateError(false); }}
+              onKeyDown={(e) => e.key === "Enter" && handleGateUnlock()}
+              style={{ textAlign: "center" }}
+            />
+            {gateError && <p style={{ color: "var(--danger)", fontSize: "0.75rem" }}>Incorrect password</p>}
+            <button className="btn-primary" onClick={handleGateUnlock}>Unlock</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <div>
           <h1 style={{ fontSize: "1.8rem" }}>Credentials</h1>
-          <p style={{ color: "var(--text-muted)", marginTop: "0.25rem" }}>Encrypted at rest · visible only inside this dashboard</p>
+          <p style={{ color: "var(--text-muted)", marginTop: "0.25rem" }}>Encrypted at rest · restricted access</p>
         </div>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
           <Plus size={16} /> Add credential
@@ -80,6 +130,9 @@ export default function Credentials() {
               </button>
             </div>
             {e.url && <a href={e.url} target="_blank" rel="noreferrer" style={{ color: "var(--text-dim)", display: "flex" }}><ExternalLink size={16} /></a>}
+            <button onClick={() => handleDelete(e.id)} style={{ background: "none", border: "none", color: "var(--text-dim)", display: "flex" }}>
+              <Trash2 size={15} />
+            </button>
           </div>
         ))}
       </div>
