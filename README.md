@@ -45,7 +45,6 @@ Slack integration ke liye aapko sirf 1 key / URL ki zaroorat padegi:
 
 1. Main Required Key:
    Slack Incoming Webhook URL
-   Example: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
    How to get this Webhook URL (Step-by-Step Guide):
    Slack API Apps page par jayein:
 
@@ -68,4 +67,4 @@ Is URL ko copy karke ClientOS Admin Panel me paste karna hoga! 2. Optional (For 
 Employee Slack Member IDs (Optional, e.g., U12345678):
 Isse Slack par jab koi task due hoga to Slack us employee ko direct @mention kar dega.
 Slack me Profile par click karke "Copy Member ID" se easily mil jata hai.
-"# ClientOS" 
+"# ClientOS"
