@@ -1,161 +1,71 @@
-# ClientOS v2 — AISE / TPX
+Created implementation_plan.md
 
-Full rebuild per COO's meeting notes: real Dashboard summary, Employee/Task
-profiles with status bars + comment threads, notifications with auto-escalation,
-a second password lock on Credentials, and Internal Projects.
+Maine complete Phase-Wise Implementation Plan tayar kar diya hai. Aap detailed plan yahan dekh sakte hain: [implementation_plan.md](file:///C:/Users/HAJI%20LAPTOP%20G55/.gemini/antigravity-ide/brain/71255276-4b10-49f4-8705-1090ac7ba708/implementation_plan.md).
 
-## 1. First-time setup (do this before `npm run dev`)
+---
 
-```bash
-npm install
-```
+Phase-Wise Breakdown:
 
-Open `.env` in the project root. Firebase and Cloudinary values are already
-filled in from your existing project. You only need to fill in two lines:
+Phase 1: Core Slack Engine & Serverless Proxy
 
-```
-VITE_CRED_PASSPHRASE=REPLACE_WITH_YOUR_OWN_PASSPHRASE
-ANTHROPIC_API_KEY=REPLACE_WITH_YOUR_ANTHROPIC_API_KEY
-```
+- `netlify/functions/slack-notify.js`: Web browser ke CORS restriction se bachne ke liye secure backend endpoint.
+- `src/lib/slack.js`: Core utility jo Slack Block Kit rich formatting (🔴 Overdue, 🟡 Due Today, 🆕 New Task, ✅ Task Done) aur interactive action buttons prepare karega.
+- Config management (save/load webhook settings in Firestore).
 
-**Important about `VITE_CRED_PASSPHRASE`:** your previous `.env` never had
-this value set, which means every credential you already saved in the
-Credentials vault was encrypted using an empty/undefined passphrase. Once you
-set a real passphrase here, any **old** saved credentials will no longer
-decrypt correctly (they'll show garbled text). You will need to re-enter
-those old credential entries once, after which they'll encrypt correctly
-under the new passphrase going forward. This only affects credentials saved
-before today — everything else (clients, notes, files, calendar) is
-unaffected.
+Phase 2: Employee Profiles & Slack Mentions (`@user`)
 
-Then run:
+- Employee profiles me Slack User ID / Handle mapping field add ki jayegi taake jab kisi employee ka task due ho, Slack par directly `<@USER_ID>` tag/mention chala jaye.
 
-```bash
-npm run dev
-```
+Phase 3: Automated Due Date & Overdue Escalation Engine
 
-## 2. All access passwords in this build
+- `src/lib/escalation.js`: System automatically har page load / background par scan karega. Jo tasks past due date honge, unka Overdue alert Slack par auto-trigger hoga.
+- Tasks due today ka auto-digest scan.
 
-| Area | Password | Notes |
-|---|---|---|
-| AISE workspace | `AISEofficial` | unchanged |
-| TPX workspace | `TPXofficial` | unchanged |
-| Podcast profile | `getitdone` | Shakaib |
-| Website profile | `thecreators` | Saif & Sami |
-| Email Marketing profile | `corethings` | Ali |
-| Development profile | `automationguy` | Abdul Rehman |
-| Admin Overview | `Deadman101!` | also unlocks Credentials (second lock) |
+Phase 4: Admin Settings & Control Center UI
 
-All five employee passwords and both workspace passwords are shared and
-identical inside both AISE and TPX, per your instructions. To change any of
-them, edit `src/config/employeeProfiles.js` (employee profiles) or
-`src/config/orgs.js` (workspace passwords).
+- `AdminOverview.jsx`: Admin Panel me ek dedicated Slack Integration Suite:
+  - Webhook URL input field.
+  - "Test Connection" button (live validation status ke saath).
+  - Notification Event Switches (Overdue, Due Today, New Assignment, Completed toggles).
+  - "Broadcast Tasks Due Today to Slack Now" instant button.
 
-## 3. What's new, page by page
+Phase 5: Event Life-cycle Hooks
 
-- **Dashboard (`/`)** — real summary view now: overdue count, due-this-week
-  count, tasks needing attention, active client count, plus two live panels
-  (Overdue / Coming up this week) pulling from both client deadlines and
-  employee tasks together.
-- **Clients (`/clients`)** — this is your old Dashboard, renamed. Same client
-  folder grid, same "Run check" AI feature, unchanged.
-- **Employees (`/employees`)** — the 5-profile picker. Click a profile, enter
-  its password, land on that profile's task board.
-- **Inside a profile** — add tasks, set a red/yellow/green status bar, open a
-  task to add threaded comments, see a recent activity feed, and click
-  **AI Overview** for a Claude-generated summary of that profile's workload.
-  A notification bell in the header shows anything relevant the moment you
-  log in.
-- **Admin Overview (`/admin-overview`)** — only reachable via the Admin card
-  password. See every profile's tasks in one place, filter by profile, edit
-  any task's status, send a manual reminder to any profile, and run a
-  **cross-team AI digest**.
-- **Internal Projects (`/internal-projects`)** — same task/status/comment
-  pattern as employee profiles, but for internal (non-client) work. Reachable
-  once any profile password has been entered this session.
-- **Credentials (`/credentials`)** — now has a second password gate
-  (`Deadman101!`, the Admin password) on top of the workspace password.
-  Deleting a saved credential is now possible too.
+- Task creation, completion, aur admin manual reminders ko Slack ke saath link karna.
 
-## 4. Auto-escalation & notifications — how it actually works
+Phase 6: End-to-End Testing & Verification
 
-There's no background server running a clock. Instead, every time the
-Dashboard, an Employee Profile, or Admin Overview loads, the app checks all
-tasks for that workspace: any task still yellow/green whose due date has
-passed gets flipped to red automatically, and a notification is created for
-**both** the assigned profile and Admin. This is a "check on page load"
-model, not real-time — if nobody opens the app for a few days, the flip
-happens the next time someone does. That's a reasonable tradeoff for an
-internal tool without paying for a scheduled server function, but flagging
-it so it's a known limitation, not a surprise.
+- Connection test, overdue triggers, aur live notifications verify karna.
 
-## 5. Firestore composite indexes you will need to create
+---
 
-Same issue as before — Firestore requires a manual index the first time a
-query combines a filter with a sort, or two different filtered fields with a
-sort. You will very likely hit **console errors with a direct "create index"
-link** the first time you use each of these. Click the link in the error,
-click **Create Index**, wait 1-5 minutes, refresh. This only needs doing
-once per index, ever. Expect to do this for:
+Aap plan review kar lein. Jab aap ready hon, bas Proceed button par click karein ya reply karein, aur main Phase 1 se execution start kar doonga!
 
-- `clients` — filter `orgId` + sort `createdAt` (Clients page)
-- `notes` — filter `clientId` + sort `createdAt` (Client folder notes)
-- `activityLog` — filter `orgId` + filter `profile` + sort `createdAt`
-- `notifications` — filter `orgId` + filter `targetProfile` + sort `createdAt`
-- `taskComments` — filter `taskId` + sort `createdAt`
-- `internalProjectComments` — filter `taskId` + sort `createdAt`
+Slack integration ke liye aapko sirf 1 key / URL ki zaroorat padegi:
 
-Dashboard, Admin Overview, and Internal Projects deliberately avoid
-`orderBy` on filtered queries (sorting is done in JavaScript after the data
-loads instead), so those should not need new indexes.
+1. Main Required Key:
+   Slack Incoming Webhook URL
+   Example: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+   How to get this Webhook URL (Step-by-Step Guide):
+   Slack API Apps page par jayein:
 
-## 6. New Firestore collections this version adds
+Web browser me open karein: https://api.slack.com/apps
+Click karein "Create New App" > Select "From scratch".
+App Name rakhein (e.g., ClientOS Alerts) aur apna Slack Workspace select karein.
+Enable Incoming Webhooks:
 
-```
-employeeTasks         { orgId, profile, title, description, dueDate, status, createdAt }
-taskComments           { taskId, orgId, author, text, createdAt }
-internalProjects       { orgId, title, description, dueDate, status, createdBy, createdAt }
-internalProjectComments{ taskId, orgId, author, text, createdAt }
-notifications          { orgId, targetProfile, type, message, relatedTaskId, read, createdAt }
-activityLog             { orgId, profile, message, createdAt }
-```
+Left menu me "Incoming Webhooks" par click karein.
+Toggle button ko "On" kar dein.
+Add Webhook to Workspace:
 
-These are created automatically the first time each feature is used —
-nothing to set up manually in Firebase Console beyond the indexes above.
+Page ke bottom par "Add New Webhook to Workspace" button par click karein.
+Wo channel select karein jahan aap notifications chahte hain (e.g., #tasks, #general, ya #alerts).
+Click Allow.
+Copy the Webhook URL:
 
-## 7. Testing locally before you deploy
-
-Run `npm run dev` and test in this order, since later pieces depend on
-earlier ones existing:
-
-1. Workspace picker → loading screen → Dashboard (should show 0s everywhere
-   on a fresh database, that's correct)
-2. Clients → add a test client
-3. Calendar → add a test deadline
-4. Employees → unlock each of the 5 profiles once, add one task to each,
-   change its status, add a comment
-5. Set a task's due date to yesterday, reload the page, confirm it auto-flips
-   to red and a notification appears in the bell icon
-6. Admin Overview → confirm you can see and edit tasks from all 4 non-admin
-   profiles, send a test reminder, run the digest
-7. Credentials → confirm the second password gate works, add and delete a
-   test credential
-8. Internal Projects → add a test project, confirm status + comments work
-
-Note: the two "AI Overview" / "digest" buttons and the "Run check" button on
-Clients will **not** work under plain `npm run dev` — Netlify Functions only
-run through `netlify dev` or on the deployed site. Everything else works
-fine locally.
-
-## 8. Deploying
-
-Same as before — commit, push to your existing GitHub repo, Netlify
-auto-rebuilds. If this is a fresh deploy, remember to add all ten `.env`
-values into Netlify's Environment Variables dashboard before the first real
-deploy, same as previous projects.
-
-```bash
-git add .
-git commit -m "v2: dashboard rebuild, employee profiles, notifications, internal projects"
-git push
-```
+Aapko ek Webhook URL mil jayega (https://hooks.slack.com/services/...).
+Is URL ko copy karke ClientOS Admin Panel me paste karna hoga! 2. Optional (For Employee Tagging / Mentions):
+Employee Slack Member IDs (Optional, e.g., U12345678):
+Isse Slack par jab koi task due hoga to Slack us employee ko direct @mention kar dega.
+Slack me Profile par click karke "Copy Member ID" se easily mil jata hai.
+"# ClientOS" 
