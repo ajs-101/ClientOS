@@ -83,6 +83,48 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus { border-color: var(--accent-teal); }
 input::placeholder { color: var(--text-dim); }
 
+select option {
+  background-color: #0b1815 !important;
+  color: #eaf6f2 !important;
+  padding: 8px 12px;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+.status-badge-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.status-badge-in-progress {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+.status-badge-completed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.status-badge-delayed {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+.status-badge-on-hold {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: rgba(31,216,180,0.25); border-radius: 8px; }
 
@@ -234,7 +276,7 @@ input::placeholder { color: var(--text-dim); }
 @media (prefers-reduced-motion: reduce) {
   .init-logo, .init-ring, .init-bar-fill { animation: none; }
 }
-/* ========== Water-flow ambient background layer ========== */
+
 .water-flow {
   position: fixed;
   inset: 0;
@@ -255,7 +297,6 @@ input::placeholder { color: var(--text-dim); }
   100% { background-position: 0% 0%, 100% 100%; }
 }
 
-/* ========== 3D tilt on interactive cards ========== */
 .glass-interactive {
   transform-style: preserve-3d;
   perspective: 800px;
@@ -277,19 +318,15 @@ input::placeholder { color: var(--text-dim); }
   .glass-interactive:hover, .gate-card:hover, .employee-card:hover { transform: none; }
 }
 
-/* ========== Stat cards / dashboard panels ========== */
 .glass:has(> svg:first-child) {
   transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* ========== Scrollbar inside panels ========== */
 .glass::-webkit-scrollbar { width: 6px; }
 .glass::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 6px; }
 
-/* ========== Tab buttons (admin overview) ========== */
 button.btn-ghost, button.btn-primary {
   transition: filter 0.2s ease, transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
-/* ========== Textarea consistency ========== */
 textarea { line-height: 1.6; }

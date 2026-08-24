@@ -21,8 +21,27 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="water-flow" />
-      <div className="ambient-orb" style={{ width: 500, height: 500, top: -100, left: -100, background: "var(--accent-teal)" }} />
-      <div className="ambient-orb" style={{ width: 400, height: 400, bottom: -80, right: -80, background: "var(--accent-cyan)", animationDelay: "3s" }} />
+      <div
+        className="ambient-orb"
+        style={{
+          width: 500,
+          height: 500,
+          top: -100,
+          left: -100,
+          background: "var(--accent-teal)",
+        }}
+      />
+      <div
+        className="ambient-orb"
+        style={{
+          width: 400,
+          height: 400,
+          bottom: -80,
+          right: -80,
+          background: "var(--accent-cyan)",
+          animationDelay: "3s",
+        }}
+      />
       <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
         <Sidebar onLogout={switchOrg} />
         <main style={{ flex: 1, padding: "2.5rem 3rem", maxWidth: 1500 }}>

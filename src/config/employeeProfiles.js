@@ -1,4 +1,4 @@
-import { Mic, Globe, Mail, Code2, ShieldCheck } from "lucide-react";
+import { Mic, Globe, Mail, Code2, ShieldCheck, Eye } from "lucide-react";
 
 export const PROFILES = {
   podcast: {
@@ -32,6 +32,14 @@ export const PROFILES = {
     password: "automationguy",
     icon: Code2,
     color: "#A78BFA",
+  },
+  aeo: {
+    id: "aeo",
+    name: "AEO Systems and Visibility Coordinator",
+    people: "AEO Team",
+    password: "AEOPASSWORD123",
+    icon: Eye,
+    color: "#22C55E",
   },
   admin: {
     id: "admin",
