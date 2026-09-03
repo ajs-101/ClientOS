@@ -24,7 +24,12 @@ import {
   Pencil,
   Check,
   X,
+  Mail,
+  Copy,
+  Timer,
 } from "lucide-react";
+import ClientReportModal from "../components/ClientReportModal";
+import TimeTrackerModal from "../components/TimeTrackerModal";
 
 const ASSET_TYPES = [
   "newsletter",
@@ -65,6 +70,14 @@ export default function ClientFolder() {
   const [uploading, setUploading] = useState(false);
   const [summary, setSummary] = useState("");
   const [loadingSummary, setLoadingSummary] = useState(false);
+
+  const [emailDraft, setEmailDraft] = useState(null);
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showTimeModal, setShowTimeModal] = useState(false);
 
   const [notes, setNotes] = useState([]);
   const [noteDraft, setNoteDraft] = useState("");
@@ -230,6 +243,37 @@ export default function ClientFolder() {
     setLoadingSummary(false);
   }
 
+  async function handleGenerateEmail() {
+    setLoadingEmail(true);
+    try {
+      const res = await fetch("/.netlify/functions/generate-client-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName: client?.name,
+          clientIndustry: client?.industry,
+          assets: assets.map((a) => `${a.type}: ${a.fileName}`),
+          notes: notes.map((n) => ({ title: n.title, content: n.content, status: n.status })),
+        }),
+      });
+      const data = await res.json();
+      setEmailDraft(data);
+      setShowEmailModal(true);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate client status email from Claude.");
+    }
+    setLoadingEmail(false);
+  }
+
+  function copyEmailToClipboard() {
+    if (!emailDraft) return;
+    const textToCopy = `Subject: ${emailDraft.subject}\n\n${emailDraft.body}`;
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
+  }
+
   if (!client)
     return <p style={{ color: "var(--text-muted)" }}>Loading client…</p>;
 
@@ -262,14 +306,124 @@ export default function ClientFolder() {
             {summary || "Summarize everything on file for this client."}
           </span>
         </div>
-        <button
-          className="btn-ghost"
-          onClick={handleSummarize}
-          disabled={loadingSummary}
-        >
-          {loadingSummary ? "Summarizing…" : "Summarize"}
-        </button>
+        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+          <button
+            className="btn-ghost"
+            onClick={() => setShowTimeModal(true)}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <Timer size={15} color="var(--accent-teal-bright)" /> Time Tracker
+          </button>
+          <button
+            className="btn-ghost"
+            onClick={() => setShowReportModal(true)}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <FileText size={15} color="var(--accent-teal-bright)" /> Weekly Report
+          </button>
+          <button
+            className="btn-ghost"
+            onClick={handleSummarize}
+            disabled={loadingSummary}
+          >
+            {loadingSummary ? "Summarizing…" : "Summarize"}
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleGenerateEmail}
+            disabled={loadingEmail}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <Mail size={15} />
+            {loadingEmail ? "Drafting Email…" : "Draft AI Email"}
+          </button>
+        </div>
       </div>
+
+      {/* --- AI EMAIL MODAL --- */}
+      {showEmailModal && emailDraft && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(0,0,0,0.75)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1.5rem",
+          }}
+          onClick={() => setShowEmailModal(false)}
+        >
+          <div
+            className="glass"
+            style={{
+              width: "100%",
+              maxWidth: 640,
+              maxHeight: "85vh",
+              overflowY: "auto",
+              padding: "2rem",
+              borderRadius: 20,
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--glass-border-hover)",
+              boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.7)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Mail size={18} color="var(--accent-teal-bright)" />
+                <h2 style={{ fontSize: "1.2rem", margin: 0 }}>AI Client Status Email Draft</h2>
+              </div>
+              <button
+                onClick={() => setShowEmailModal(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-dim)",
+                  cursor: "pointer",
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ fontSize: "0.75rem", color: "var(--text-dim)", display: "block", marginBottom: "0.3rem" }}>
+                Subject Line
+              </label>
+              <input
+                value={emailDraft.subject}
+                onChange={(e) => setEmailDraft({ ...emailDraft, subject: e.target.value })}
+                style={{ width: "100%", fontSize: "0.9rem", fontWeight: 600 }}
+              />
+            </div>
+
+            <div style={{ marginBottom: "1.5rem" }}>
+              <label style={{ fontSize: "0.75rem", color: "var(--text-dim)", display: "block", marginBottom: "0.3rem" }}>
+                Email Body
+              </label>
+              <textarea
+                value={emailDraft.body}
+                onChange={(e) => setEmailDraft({ ...emailDraft, body: e.target.value })}
+                rows={12}
+                style={{ width: "100%", fontSize: "0.88rem", lineHeight: 1.6, resize: "vertical", fontFamily: "inherit" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
+              <button className="btn-ghost" onClick={() => setShowEmailModal(false)}>
+                Close
+              </button>
+              <button className="btn-primary" onClick={copyEmailToClipboard} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                {copiedEmail ? <Check size={16} /> : <Copy size={16} />}
+                {copiedEmail ? "Copied to Clipboard!" : "Copy Email"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- NOTES SECTION --- */}
       <div
@@ -719,7 +873,7 @@ export default function ClientFolder() {
                       textTransform: "capitalize",
                     }}
                   >
-                    {a.type.replace("_", " ")}
+                    {a.type ? a.type.replace("_", " ") : "asset"}
                   </p>
                 </a>
               </>
@@ -727,6 +881,20 @@ export default function ClientFolder() {
           </div>
         ))}
       </div>
+
+      <ClientReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        client={client}
+        notes={notes}
+        assets={assets}
+      />
+
+      <TimeTrackerModal
+        isOpen={showTimeModal}
+        onClose={() => setShowTimeModal(false)}
+        clientName={client?.name}
+      />
     </div>
   );
 }

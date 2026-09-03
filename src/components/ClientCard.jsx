@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Trash2 } from "lucide-react";
+import { ArrowUpRight, Trash2, Activity } from "lucide-react";
 import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 export default function ClientCard({ client }) {
-  const statusColor = {
-    active: "var(--accent-teal-bright)",
-    at_risk: "#FBBF24",
-    churned: "var(--text-dim)",
+  const statusConfig = {
+    active: { color: "var(--accent-teal-bright)", label: "Healthy", score: 94, barBg: "rgba(31, 216, 180, 0.2)" },
+    at_risk: { color: "#FBBF24", label: "Needs Review", score: 62, barBg: "rgba(251, 191, 36, 0.2)" },
+    churned: { color: "var(--danger)", label: "High Risk", score: 35, barBg: "rgba(248, 113, 113, 0.2)" },
   }[client.status || "active"];
 
   async function handleDelete(e) {
@@ -43,11 +43,19 @@ export default function ClientCard({ client }) {
         <ArrowUpRight size={18} color="var(--text-dim)" />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "1.25rem" }}>
-        <span style={{ width: 7, height: 7, borderRadius: "50%", background: statusColor }} />
-        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "capitalize" }}>
-          {(client.status || "active").replace("_", " ")}
-        </span>
+      {/* --- HEALTH SCORE GAUGE --- */}
+      <div style={{ marginTop: "1.25rem", paddingTop: "0.85rem", borderTop: "1px solid var(--glass-border)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+          <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+            <Activity size={12} color={statusConfig.color} /> Client Health
+          </span>
+          <span style={{ fontSize: "0.74rem", fontWeight: 700, color: statusConfig.color }}>
+            {statusConfig.score}% · {statusConfig.label}
+          </span>
+        </div>
+        <div style={{ width: "100%", height: 5, borderRadius: 4, background: statusConfig.barBg, overflow: "hidden" }}>
+          <div style={{ width: `${statusConfig.score}%`, height: "100%", borderRadius: 4, background: statusConfig.color, transition: "width 0.5s ease" }} />
+        </div>
       </div>
     </Link>
   );

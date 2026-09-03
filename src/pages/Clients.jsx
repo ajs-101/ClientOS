@@ -10,12 +10,14 @@ import {
 import { db } from "../lib/firebase";
 import { useOrg } from "../context/OrgContext";
 import ClientCard from "../components/ClientCard";
-import { Plus, Sparkles } from "lucide-react";
+import AutoTaskGeneratorModal from "../components/AutoTaskGeneratorModal";
+import { Plus, Sparkles, Zap } from "lucide-react";
 
 export default function Clients() {
   const { activeOrg } = useOrg();
   const [clients, setClients] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [showAutoGenerator, setShowAutoGenerator] = useState(false);
   const [name, setName] = useState("");
   const [industry, setIndustry] = useState("");
   const [riskSummary, setRiskSummary] = useState("");
@@ -79,13 +81,22 @@ export default function Clients() {
             {clients.length} client{clients.length !== 1 ? "s" : ""} on record
           </p>
         </div>
-        <button
-          className="btn-primary"
-          onClick={() => setShowForm(!showForm)}
-          style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-        >
-          <Plus size={16} /> New client
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <button
+            className="btn-ghost"
+            onClick={() => setShowAutoGenerator(true)}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <Zap size={15} color="var(--accent-teal-bright)" /> AI Task Breakdown
+          </button>
+          <button
+            className="btn-primary"
+            onClick={() => setShowForm(!showForm)}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <Plus size={16} /> New client
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -158,6 +169,11 @@ export default function Clients() {
           <ClientCard key={c.id} client={c} />
         ))}
       </div>
+
+      <AutoTaskGeneratorModal
+        isOpen={showAutoGenerator}
+        onClose={() => setShowAutoGenerator(false)}
+      />
     </div>
   );
 }

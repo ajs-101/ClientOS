@@ -18,7 +18,9 @@ import { runOverdueEscalation } from "../lib/escalation";
 import { PROFILES } from "../config/employeeProfiles";
 import TaskCard from "../components/TaskCard";
 import NotificationPanel from "../components/NotificationPanel";
-import { Plus, Sparkles, Activity, ArrowLeft } from "lucide-react";
+import TodayTasksModal from "../components/TodayTasksModal";
+import KanbanBoard from "../components/KanbanBoard";
+import { Plus, Sparkles, Activity, ArrowLeft, Kanban, ListFilter } from "lucide-react";
 
 export default function EmployeeProfile() {
   const { profileId } = useParams();
@@ -34,6 +36,8 @@ export default function EmployeeProfile() {
   const [form, setForm] = useState({ title: "", description: "", dueDate: "" });
   const [summary, setSummary] = useState("");
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [showTodayModal, setShowTodayModal] = useState(false);
+  const [viewMode, setViewMode] = useState("kanban");
 
   // Guard: must have unlocked this exact profile
   useEffect(() => {
@@ -190,13 +194,15 @@ export default function EmployeeProfile() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           <NotificationPanel orgId={activeOrg} targetProfile={profileId} />
-          <button
-            className="btn-primary"
-            onClick={() => setShowForm(!showForm)}
-            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-          >
-            <Plus size={16} /> New task
-          </button>
+          {activeProfile === "admin" && (
+            <button
+              className="btn-primary"
+              onClick={() => setShowForm(!showForm)}
+              style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+            >
+              <Plus size={16} /> New task
+            </button>
+          )}
         </div>
       </div>
 
@@ -223,13 +229,22 @@ export default function EmployeeProfile() {
               `AI overview of everything on ${profileConfig.name}'s plate.`}
           </span>
         </div>
-        <button
-          className="btn-ghost"
-          onClick={handleSummarize}
-          disabled={loadingSummary}
-        >
-          {loadingSummary ? "Summarizing…" : "AI Overview"}
-        </button>
+        <div style={{ display: "flex", gap: "0.6rem" }}>
+          <button
+            className="btn-ghost"
+            onClick={handleSummarize}
+            disabled={loadingSummary}
+          >
+            {loadingSummary ? "Summarizing…" : "AI Overview"}
+          </button>
+          <button
+            className="btn-primary"
+            onClick={() => setShowTodayModal(true)}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            <Sparkles size={15} /> Today's Tasks (AI Brief)
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -266,21 +281,75 @@ export default function EmployeeProfile() {
         </div>
       )}
 
-      <div style={{ display: "grid", gap: "0.9rem", marginBottom: "2.5rem" }}>
-        {tasks.length === 0 && (
-          <p style={{ color: "var(--text-dim)", fontSize: "0.85rem" }}>
-            No tasks yet.
-          </p>
-        )}
-        {tasks.map((t) => (
-          <TaskCard
-            key={t.id}
-            task={t}
+      {/* View Mode Switcher Bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <h2 style={{ fontSize: "1.1rem", margin: 0 }}>Active Deliverables ({tasks.length})</h2>
+        <div style={{ display: "flex", gap: "0.4rem", background: "rgba(255,255,255,0.03)", padding: 4, borderRadius: 10, border: "1px solid var(--glass-border)" }}>
+          <button
+            onClick={() => setViewMode("kanban")}
+            style={{
+              padding: "0.35rem 0.75rem",
+              borderRadius: 8,
+              fontSize: "0.78rem",
+              fontWeight: 500,
+              border: "none",
+              background: viewMode === "kanban" ? "rgba(31,216,180,0.2)" : "transparent",
+              color: viewMode === "kanban" ? "var(--accent-teal-bright)" : "var(--text-muted)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+            }}
+          >
+            <Kanban size={14} /> Kanban Board
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            style={{
+              padding: "0.35rem 0.75rem",
+              borderRadius: 8,
+              fontSize: "0.78rem",
+              fontWeight: 500,
+              border: "none",
+              background: viewMode === "list" ? "rgba(31,216,180,0.2)" : "transparent",
+              color: viewMode === "list" ? "var(--accent-teal-bright)" : "var(--text-muted)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+            }}
+          >
+            <ListFilter size={14} /> List View
+          </button>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: "2.5rem" }}>
+        {viewMode === "kanban" ? (
+          <KanbanBoard
+            tasks={tasks}
             authorLabel={profileConfig.name}
             onStatusChange={handleStatusChange}
             onDelete={handleDeleteTask}
           />
-        ))}
+        ) : (
+          <div style={{ display: "grid", gap: "0.9rem" }}>
+            {tasks.length === 0 && (
+              <p style={{ color: "var(--text-dim)", fontSize: "0.85rem" }}>
+                No tasks yet.
+              </p>
+            )}
+            {tasks.map((t) => (
+              <TaskCard
+                key={t.id}
+                task={t}
+                authorLabel={profileConfig.name}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDeleteTask}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div>
@@ -315,6 +384,14 @@ export default function EmployeeProfile() {
           ))}
         </div>
       </div>
+
+      <TodayTasksModal
+        isOpen={showTodayModal}
+        onClose={() => setShowTodayModal(false)}
+        tasks={tasks}
+        events={[]}
+        profileName={profileConfig?.name || "Profile"}
+      />
     </div>
   );
 }

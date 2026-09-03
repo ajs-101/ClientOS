@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useOrg } from "./context/OrgContext";
 import WorkspaceGate from "./pages/WorkspaceGate";
 import Sidebar from "./components/Sidebar";
+import ChatWidget from "./components/ChatWidget";
+import CommandPalette from "./components/CommandPalette";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import ClientFolder from "./pages/ClientFolder";
@@ -15,6 +18,7 @@ import InternalProjects from "./pages/InternalProjects";
 
 export default function App() {
   const { activeOrg, switchOrg } = useOrg();
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   if (!activeOrg) return <WorkspaceGate />;
 
@@ -42,11 +46,11 @@ export default function App() {
           animationDelay: "3s",
         }}
       />
-      <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
+      <div style={{ display: "flex", position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Sidebar onLogout={switchOrg} />
-        <main style={{ flex: 1, padding: "2.5rem 3rem", maxWidth: 1500 }}>
+        <main style={{ flex: 1, padding: "2.5rem 3rem", maxWidth: 1500, width: "100%", overflowX: "hidden" }}>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Dashboard onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/client/:clientId" element={<ClientFolder />} />
             <Route path="/calendar" element={<Calendar />} />
@@ -59,6 +63,11 @@ export default function App() {
           </Routes>
         </main>
       </div>
+      <ChatWidget />
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+      />
     </BrowserRouter>
   );
 }
